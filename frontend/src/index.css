@@ -1,0 +1,148 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  /* 浅色模式配色 - 温暖棕色调 */
+  --bg-color: #faf8f5;
+  --bg-card: #ffffff;
+  --text-color: #8b6642;
+  --text-secondary: #a67c52;
+  --border-color: #e8dfd3;
+  --primary-color: #a67c52;
+  --primary-hover: #8b6642;
+  --hover-bg: #f5efe8;
+  --accent-color: #d4a574;
+  --shadow-color: rgba(166, 124, 82, 0.1);
+  --danger-color: #c0392b;
+  --warning-color: #d4a574;
+  --success-color: #7d9a6f;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 深色模式 - 温暖棕色调 */
+.dark {
+  --bg-color: #2a2520;
+  --bg-card: #3a332c;
+  --text-color: #e8dfd3;
+  --text-secondary: #b8a08a;
+  --border-color: #4a4035;
+  --primary-color: #d4a574;
+  --primary-hover: #e8c49a;
+  --hover-bg: #4a4035;
+  --accent-color: #d4a574;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --danger-color: #e74c3c;
+  --warning-color: #d4a574;
+  --success-color: #8fae7f;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#root {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* xterm 终端样式覆盖 */
+.xterm {
+  padding: 8px;
+}
+
+.xterm-viewport {
+  background-color: #1a1a1a !important;
+}
+
+/* 终端容器全屏样式 */
+.terminal-fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 9999 !important;
+  border-radius: 0 !important;
+}
+
+.terminal-fullscreen .terminal-header {
+  border-radius: 0 !important;
+}
+
+/* 动画 */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* 加载动画 */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* 触摸目标 */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
