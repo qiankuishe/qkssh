@@ -43,7 +43,7 @@ services:
 
 ```bash
 # 下载最新构建包
-curl -L https://github.com/qiankuishe/qkssh/releases/latest/download/qkssh-release.tar.gz -o qkssh.tar.gz
+curl -L https://github.com/qiankuishe/qkssh/releases/download/latest/qkssh-release.tar.gz -o qkssh.tar.gz
 
 # 解压并运行
 tar -xzvf qkssh.tar.gz

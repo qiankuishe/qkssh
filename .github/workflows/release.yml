@@ -5,6 +5,9 @@ on:
     branches: [main]
     tags: ['v*']
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -42,8 +45,33 @@ jobs:
           name: qkssh-release
           path: release/qkssh-release.tar.gz
 
-      - name: Create Release (on tag)
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Delete existing latest release
+        run: gh release delete latest --yes || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create/Update Latest Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          name: Latest Build
+          body: |
+            自动构建的最新版本，每次 push 到 main 分支时更新。
+            
+            ## 下载
+            ```bash
+            curl -L https://github.com/qiankuishe/qkssh/releases/download/latest/qkssh-release.tar.gz -o qkssh.tar.gz
+            tar -xzvf qkssh.tar.gz
+            cd qkssh
+            node dist/server.js
+            ```
+          files: release/qkssh-release.tar.gz
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Version Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v1
         with:
           files: release/qkssh-release.tar.gz
