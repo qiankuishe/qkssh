@@ -19,7 +19,7 @@ Web SSH 终端，支持密码和私钥认证，可生成快速连接链接。
 ```bash
 docker run -d \
   --name qkssh \
-  -p 8888:8888 \
+  -p 3131:3131 \
   ghcr.io/qiankuishe/qkssh:latest
 ```
 
@@ -30,7 +30,7 @@ services:
   qkssh:
     image: ghcr.io/qiankuishe/qkssh:latest
     ports:
-      - "8888:8888"
+      - "3131:3131"
     environment:
       - QKSSH_MAXCONN=100
       - QKSSH_ORIGINS=https://your-domain.com
@@ -75,7 +75,7 @@ pm2 save
 | 环境变量 | 说明 | 默认值 |
 |---------|------|--------|
 | `QKSSH_ADDRESS` | 监听地址 | 0.0.0.0 |
-| `QKSSH_PORT` | 服务端口 | 8888 |
+| `QKSSH_PORT` | 服务端口 | 3131 |
 | `QKSSH_TIMEOUT` | SSH 连接超时(秒) | 10 |
 | `QKSSH_MAXCONN` | 最大并发连接数 | 100 |
 | `QKSSH_ORIGINS` | 允许跨域来源（逗号分隔） | * |
@@ -105,7 +105,7 @@ pm2 save
 
 ## 使用说明
 
-1. 访问 `http://localhost:8888`
+1. 访问 `http://localhost:3131`
 2. 填写 SSH 连接信息（主机、端口、用户名）
 3. 选择认证方式：密码或私钥
 4. 点击连接，进入终端

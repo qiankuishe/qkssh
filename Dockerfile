@@ -46,15 +46,15 @@ USER qkssh
 
 # 环境变量
 ENV NODE_ENV=production
-ENV QKSSH_PORT=8888
+ENV QKSSH_PORT=3131
 ENV QKSSH_ADDRESS=0.0.0.0
 
 # 暴露端口
-EXPOSE 8888
+EXPOSE 3131
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8888/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3131/health || exit 1
 
 # 使用 tini 作为 init 进程
 ENTRYPOINT ["/sbin/tini", "--"]

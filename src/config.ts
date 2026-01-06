@@ -2,7 +2,7 @@
 export const config = {
   // 服务器配置
   address: process.env.QKSSH_ADDRESS || '0.0.0.0',
-  port: parseInt(process.env.QKSSH_PORT || '8888', 10),
+  port: parseInt(process.env.QKSSH_PORT || '3131', 10),
   
   // SSH 配置
   timeout: parseInt(process.env.QKSSH_TIMEOUT || '10', 10) * 1000, // 转换为毫秒
