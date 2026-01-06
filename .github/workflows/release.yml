@@ -1,0 +1,51 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd frontend && npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Create release package
+        run: |
+          mkdir -p release/qkssh
+          cp -r dist release/qkssh/
+          cp -r public release/qkssh/
+          cp package.json release/qkssh/
+          cp package-lock.json release/qkssh/
+          cd release/qkssh && npm ci --omit=dev
+          cd .. && tar -czvf qkssh-release.tar.gz qkssh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qkssh-release
+          path: release/qkssh-release.tar.gz
+
+      - name: Create Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release/qkssh-release.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
