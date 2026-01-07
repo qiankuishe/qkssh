@@ -32,7 +32,7 @@ async function main() {
       "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
       "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
       "font-src 'self' https://cdn.jsdelivr.net; " +
-      "img-src 'self' data: blob:; " +
+      "img-src 'self' data:; " +
       "connect-src 'self' ws: wss:; " +
       "frame-ancestors 'none'"
     )
