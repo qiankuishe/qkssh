@@ -99,7 +99,16 @@ class SessionManager {
       // 密码认证
       if (cfg.password) {
         connectConfig.password = cfg.password
+        // 添加 keyboard-interactive 认证支持（用于 serv00 等服务器）
+        connectConfig.tryKeyboard = true
       }
+
+      // keyboard-interactive 认证回调
+      client.on('keyboard-interactive', (name, instructions, instructionsLang, prompts, finish) => {
+        // 自动用密码回答所有提示
+        const responses = prompts.map(() => cfg.password || '')
+        finish(responses)
+      })
 
       // 尝试连接
       try {
