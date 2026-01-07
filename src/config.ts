@@ -7,7 +7,6 @@ export const config = {
   // SSH 配置
   timeout: parseInt(process.env.QKSSH_TIMEOUT || '10', 10) * 1000, // 转换为毫秒
   maxConn: parseInt(process.env.QKSSH_MAXCONN || '100', 10),
-  bufferSize: parseInt(process.env.QKSSH_BUFFER || '32768', 10),
   
   // 安全配置
   allowOrigins: process.env.QKSSH_ORIGINS || '*',

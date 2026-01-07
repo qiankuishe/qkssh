@@ -1,49 +1,37 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { SocketStream } from '@fastify/websocket'
-import { sessionManager, SSHSessionConfig } from '../ssh/session-manager.js'
-
-interface ConnectBody {
-  hostname: string
-  port?: number
-  username: string
-  password?: string
-  privatekey?: string
-  passphrase?: string
-}
-
-interface ResizeMessage {
-  type: 'resize'
-  cols: number
-  rows: number
-}
-
-interface DataMessage {
-  type: 'data'
-  data: string
-}
-
-type WSMessage = ResizeMessage | DataMessage | string
+import { sessionManager } from '../ssh/session-manager.js'
+import type { 
+  SSHSessionConfig, 
+  ConnectRequest, 
+  ConnectResponse, 
+  WSQuery, 
+  WSMessage,
+  ResizeMessage, 
+  DataMessage 
+} from '../types.js'
+import { ErrorMessages } from '../types.js'
 
 export async function sshRoutes(fastify: FastifyInstance) {
   // 建立 SSH 连接
-  fastify.post('/connect', async (request: FastifyRequest<{ Body: ConnectBody }>, reply: FastifyReply) => {
+  fastify.post('/connect', async (request: FastifyRequest<{ Body: ConnectRequest }>, reply: FastifyReply) => {
     const { hostname, port = 22, username, password, privatekey, passphrase } = request.body
 
     // 验证必填参数
     if (!hostname?.trim()) {
-      return reply.send({ success: false, message: '主机地址不能为空' })
+      return reply.send({ success: false, message: ErrorMessages.EMPTY_HOSTNAME })
     }
     if (!username?.trim()) {
-      return reply.send({ success: false, message: '用户名不能为空' })
+      return reply.send({ success: false, message: ErrorMessages.EMPTY_USERNAME })
     }
     if (!password && !privatekey) {
-      return reply.send({ success: false, message: '请提供密码或私钥' })
+      return reply.send({ success: false, message: ErrorMessages.NO_CREDENTIALS })
     }
 
     // 验证端口范围
     const portNum = typeof port === 'string' ? parseInt(port, 10) : port
     if (portNum < 1 || portNum > 65535) {
-      return reply.send({ success: false, message: '端口范围无效 (1-65535)' })
+      return reply.send({ success: false, message: ErrorMessages.INVALID_PORT })
     }
 
     try {
@@ -58,32 +46,34 @@ export async function sshRoutes(fastify: FastifyInstance) {
 
       const session = await sessionManager.createSession(config)
       
-      return reply.send({
+      const response: ConnectResponse = {
         success: true,
         session_id: session.id
-      })
+      }
+      return reply.send(response)
     } catch (err: any) {
       console.error('SSH 连接失败:', err.message)
       
-      let message = '连接失败，请检查地址和凭据'
+      let message: string = ErrorMessages.CONNECTION_FAILED
       if (err.message.includes('Authentication failed') || err.message.includes('All configured authentication methods failed')) {
-        message = '认证失败，请检查用户名和密码'
+        message = ErrorMessages.AUTH_FAILED
       } else if (err.message.includes('ECONNREFUSED')) {
-        message = '连接被拒绝，请检查主机地址和端口'
+        message = ErrorMessages.CONNECTION_REFUSED
       } else if (err.message.includes('ETIMEDOUT') || err.message.includes('连接超时')) {
-        message = '连接超时，请检查网络或主机地址'
+        message = ErrorMessages.CONNECTION_TIMEOUT
       } else if (err.message.includes('连接数已达上限')) {
-        message = '服务器连接数已达上限，请稍后再试'
+        message = ErrorMessages.MAX_CONNECTIONS
       }
       
-      return reply.send({ success: false, message })
+      const response: ConnectResponse = { success: false, message }
+      return reply.send(response)
     }
   })
 
   // WebSocket 终端连接
-  fastify.get('/ws', { websocket: true }, (connection: SocketStream, request: FastifyRequest) => {
+  fastify.get<{ Querystring: WSQuery }>('/ws', { websocket: true }, (connection: SocketStream, request: FastifyRequest<{ Querystring: WSQuery }>) => {
     const socket = connection.socket
-    const sessionId = (request.query as any).session_id
+    const sessionId = request.query.session_id
 
     console.log(`WebSocket 连接请求: session_id=${sessionId}`)
 
@@ -99,7 +89,7 @@ export async function sshRoutes(fastify: FastifyInstance) {
 
     if (!sessionId) {
       console.log('WebSocket 错误: 缺少 session_id')
-      sendJson({ type: 'error', message: '缺少 session_id' })
+      sendJson({ type: 'error', message: ErrorMessages.MISSING_SESSION_ID })
       socket.close()
       return
     }
@@ -107,7 +97,7 @@ export async function sshRoutes(fastify: FastifyInstance) {
     const session = sessionManager.getSession(sessionId)
     if (!session) {
       console.log(`WebSocket 错误: 会话不存在 ${sessionId}`)
-      sendJson({ type: 'error', message: '会话不存在或已过期' })
+      sendJson({ type: 'error', message: ErrorMessages.SESSION_NOT_FOUND })
       socket.close()
       return
     }
@@ -115,7 +105,7 @@ export async function sshRoutes(fastify: FastifyInstance) {
     // 检查 SSH 客户端是否仍然连接
     if (!session.connected) {
       console.log(`WebSocket 错误: SSH 连接已断开 ${sessionId}`)
-      sendJson({ type: 'error', message: '会话已过期，请重新连接' })
+      sendJson({ type: 'error', message: ErrorMessages.SESSION_EXPIRED })
       socket.close()
       sessionManager.removeSession(sessionId)
       return
@@ -124,7 +114,7 @@ export async function sshRoutes(fastify: FastifyInstance) {
     // 检查会话是否已经有活动的 shell（防止重复连接）
     if (session.stream) {
       console.log(`WebSocket 错误: 会话已被使用 ${sessionId}`)
-      sendJson({ type: 'error', message: '会话已被使用' })
+      sendJson({ type: 'error', message: ErrorMessages.SESSION_IN_USE })
       socket.close()
       return
     }
@@ -193,26 +183,23 @@ export async function sshRoutes(fastify: FastifyInstance) {
         }
       })
 
-      socket.on('close', () => {
+      // 统一的清理函数
+      const cleanup = (reason: string) => {
         stream.close()
         session.client.end()
         session.connected = false
-        // 不立即删除会话，让清理定时器处理
-        // 这样可以处理 React StrictMode 的双重挂载
-        console.log(`WebSocket 连接关闭: ${sessionId}`)
-      })
+        console.log(`WebSocket ${reason}: ${sessionId}`)
+      }
 
+      socket.on('close', () => cleanup('连接关闭'))
       socket.on('error', (err: Error) => {
         console.error('WebSocket error:', err.message)
-        stream.close()
-        session.client.end()
-        session.connected = false
-        // 不立即删除会话，让清理定时器处理
+        cleanup('错误断开')
       })
 
     }).catch(err => {
       console.error('启动 shell 失败:', err.message)
-      sendJson({ type: 'error', message: '启动终端失败' })
+      sendJson({ type: 'error', message: ErrorMessages.SHELL_START_FAILED })
       socket.close()
       session.client.end()
       sessionManager.removeSession(sessionId)

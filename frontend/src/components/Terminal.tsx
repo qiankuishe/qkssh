@@ -12,6 +12,31 @@ import { createWebSocket } from '../utils/connection'
 import clsx from 'clsx'
 import 'xterm/css/xterm.css'
 
+// 终端主题配置
+const TERMINAL_THEME = {
+  background: '#1a1a1a',
+  foreground: '#e8dfd3',
+  cursor: '#d4a574',
+  cursorAccent: '#1a1a1a',
+  selectionBackground: 'rgba(212, 165, 116, 0.3)',
+  black: '#1a1a1a',
+  red: '#c0392b',
+  green: '#7d9a6f',
+  yellow: '#d4a574',
+  blue: '#5d8aa8',
+  magenta: '#a67c52',
+  cyan: '#5f9ea0',
+  white: '#e8dfd3',
+  brightBlack: '#4a4035',
+  brightRed: '#e74c3c',
+  brightGreen: '#8fae7f',
+  brightYellow: '#e8c49a',
+  brightBlue: '#7eb8da',
+  brightMagenta: '#c9a86c',
+  brightCyan: '#7ec8c8',
+  brightWhite: '#faf8f5'
+}
+
 interface Props {
   sessionId: string
   hostname: string
@@ -42,29 +67,7 @@ export default function Terminal({ sessionId, hostname, username, onDisconnect }
       cursorStyle: 'block',
       fontSize: 14,
       fontFamily: 'Menlo, Monaco, "Courier New", monospace',
-      theme: {
-        background: '#1a1a1a',
-        foreground: '#e8dfd3',
-        cursor: '#d4a574',
-        cursorAccent: '#1a1a1a',
-        selectionBackground: 'rgba(212, 165, 116, 0.3)',
-        black: '#1a1a1a',
-        red: '#c0392b',
-        green: '#7d9a6f',
-        yellow: '#d4a574',
-        blue: '#5d8aa8',
-        magenta: '#a67c52',
-        cyan: '#5f9ea0',
-        white: '#e8dfd3',
-        brightBlack: '#4a4035',
-        brightRed: '#e74c3c',
-        brightGreen: '#8fae7f',
-        brightYellow: '#e8c49a',
-        brightBlue: '#7eb8da',
-        brightMagenta: '#c9a86c',
-        brightCyan: '#7ec8c8',
-        brightWhite: '#faf8f5'
-      },
+      theme: TERMINAL_THEME,
       allowProposedApi: true
     })
 

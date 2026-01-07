@@ -7,6 +7,21 @@ export interface ConnectionConfig {
   passphrase?: string
 }
 
+// Base64 编码/解码工具函数（支持 Unicode）
+function base64Encode(str: string): string {
+  return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => 
+    String.fromCharCode(parseInt(p1, 16))
+  ))
+}
+
+function base64Decode(str: string): string {
+  return decodeURIComponent(
+    atob(str).split('').map(c => 
+      '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    ).join('')
+  )
+}
+
 // 解析 URL 参数
 export function parseUrlParams(): ConnectionConfig | null {
   const params = new URLSearchParams(window.location.search)
@@ -18,15 +33,18 @@ export function parseUrlParams(): ConnectionConfig | null {
   // 尝试 Base64 解码密码
   if (password) {
     try {
-      password = atob(password)
+      password = base64Decode(password)
     } catch {
       // 如果解码失败，使用原始值
     }
   }
 
+  const portStr = params.get('port')
+  const port = portStr ? parseInt(portStr, 10) : 22
+  
   return {
     hostname,
-    port: parseInt(params.get('port') || '22', 10),
+    port: isNaN(port) || port < 1 || port > 65535 ? 22 : port,
     username: params.get('username') || 'root',
     password,
     privatekey: params.get('privatekey') || '',
@@ -42,8 +60,13 @@ export function generateQuickLink(config: ConnectionConfig): string {
   params.set('username', config.username)
   
   if (config.password) {
-    // Base64 编码密码
-    params.set('password', btoa(config.password))
+    // Base64 编码密码（支持 Unicode）
+    try {
+      params.set('password', base64Encode(config.password))
+    } catch {
+      // 如果编码失败，不包含密码
+      console.warn('密码编码失败，链接将不包含密码')
+    }
   }
 
   return `${window.location.origin}${window.location.pathname}?${params.toString()}`

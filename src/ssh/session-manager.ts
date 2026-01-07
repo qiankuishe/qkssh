@@ -1,23 +1,9 @@
 import { Client, ClientChannel } from 'ssh2'
 import { v4 as uuidv4 } from 'uuid'
 import { config } from '../config.js'
+import type { SSHSessionConfig, SSHSession } from '../types.js'
 
-export interface SSHSessionConfig {
-  hostname: string
-  port: number
-  username: string
-  password?: string
-  privateKey?: string
-  passphrase?: string
-}
-
-export interface SSHSession {
-  id: string
-  client: Client
-  stream?: ClientChannel
-  createdAt: Date
-  connected: boolean
-}
+export type { SSHSessionConfig, SSHSession }
 
 class SessionManager {
   private sessions: Map<string, SSHSession> = new Map()
@@ -31,9 +17,14 @@ class SessionManager {
     this.cleanupTimer = setInterval(() => {
       const now = Date.now()
       for (const [id, session] of this.sessions) {
-        // 清理超过30秒未使用且未连接WebSocket的会话
-        if (!session.stream && now - session.createdAt.getTime() > config.sessionTimeout) {
-          console.log(`清理过期会话: ${id}`)
+        // 清理条件：
+        // 1. 未连接WebSocket且超过30秒的会话
+        // 2. 已断开连接的会话
+        const isExpired = !session.stream && now - session.createdAt.getTime() > config.sessionTimeout
+        const isDisconnected = !session.connected
+        
+        if (isExpired || isDisconnected) {
+          console.log(`清理会话: ${id} (expired: ${isExpired}, disconnected: ${isDisconnected})`)
           this.closeSession(id)
         }
       }
@@ -54,12 +45,24 @@ class SessionManager {
     const sessionId = uuidv4()
 
     return new Promise((resolve, reject) => {
+      let isResolved = false
+      
+      const cleanup = () => {
+        client.removeAllListeners()
+      }
+      
       const timeout = setTimeout(() => {
-        client.end()
-        reject(new Error('连接超时'))
+        if (!isResolved) {
+          isResolved = true
+          cleanup()
+          client.end()
+          reject(new Error('连接超时'))
+        }
       }, config.timeout)
 
       client.on('ready', () => {
+        if (isResolved) return
+        isResolved = true
         clearTimeout(timeout)
         const session: SSHSession = {
           id: sessionId,
@@ -73,7 +76,10 @@ class SessionManager {
       })
 
       client.on('error', (err) => {
+        if (isResolved) return
+        isResolved = true
         clearTimeout(timeout)
+        cleanup()
         console.error(`SSH 连接错误: ${err.message}`)
         reject(err)
       })
@@ -104,7 +110,7 @@ class SessionManager {
       }
 
       // keyboard-interactive 认证回调
-      client.on('keyboard-interactive', (name, instructions, instructionsLang, prompts, finish) => {
+      client.on('keyboard-interactive', (_name, _instructions, _instructionsLang, prompts, finish) => {
         // 自动用密码回答所有提示
         const responses = prompts.map(() => cfg.password || '')
         finish(responses)
@@ -114,8 +120,12 @@ class SessionManager {
       try {
         client.connect(connectConfig)
       } catch (err) {
-        clearTimeout(timeout)
-        reject(err)
+        if (!isResolved) {
+          isResolved = true
+          clearTimeout(timeout)
+          cleanup()
+          reject(err)
+        }
       }
     })
   }
@@ -171,6 +181,10 @@ class SessionManager {
     })
   }
 
+  /**
+   * 调整终端大小
+   * 注意：目前 ssh.ts 直接调用 stream.setWindow，此方法保留供外部调用
+   */
   resizeTerminal(sessionId: string, cols: number, rows: number): void {
     const session = this.sessions.get(sessionId)
     if (session?.stream) {

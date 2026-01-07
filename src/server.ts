@@ -22,7 +22,7 @@ async function main() {
   })
 
   // 安全响应头
-  fastify.addHook('onSend', async (request, reply) => {
+  fastify.addHook('onSend', async (_request, reply) => {
     reply.header('X-Content-Type-Options', 'nosniff')
     reply.header('X-Frame-Options', 'DENY')
     reply.header('X-XSS-Protection', '1; mode=block')
@@ -32,7 +32,7 @@ async function main() {
       "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
       "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
       "font-src 'self' https://cdn.jsdelivr.net; " +
-      "img-src 'self' data:; " +
+      "img-src 'self' data: blob:; " +
       "connect-src 'self' ws: wss:; " +
       "frame-ancestors 'none'"
     )

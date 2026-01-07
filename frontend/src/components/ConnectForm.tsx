@@ -15,6 +15,10 @@ import {
 import { ConnectionConfig, connectSSH, generateQuickLink } from '../utils/connection'
 import clsx from 'clsx'
 
+// 共享的输入框样式
+const inputBaseClass = "border border-border-main rounded-xl bg-bg-main text-text-main focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+const inputWithIconClass = `w-full pl-10 pr-4 py-2.5 ${inputBaseClass} placeholder-text-secondary/60`
+
 interface Props {
   onConnect: (sessionId: string, hostname: string, username: string, formData: ConnectionConfig) => void
   initialConfig: ConnectionConfig | null
@@ -178,7 +182,7 @@ export default function ConnectForm({ onConnect, initialConfig, autoConnect }: P
                   type="text"
                   value={formData.hostname}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-2.5 border border-border-main rounded-xl bg-bg-main text-text-main placeholder-text-secondary/60 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  className={inputWithIconClass}
                   placeholder="192.168.1.100"
                   disabled={isSubmitting}
                 />
@@ -191,7 +195,7 @@ export default function ConnectForm({ onConnect, initialConfig, autoConnect }: P
                 type="number"
                 value={formData.port}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2.5 border border-border-main rounded-xl bg-bg-main text-text-main text-center focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                className={`w-full px-3 py-2.5 ${inputBaseClass} text-center`}
                 min="1"
                 max="65535"
                 disabled={isSubmitting}
@@ -210,7 +214,7 @@ export default function ConnectForm({ onConnect, initialConfig, autoConnect }: P
                   type="text"
                   value={formData.username}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-2.5 border border-border-main rounded-xl bg-bg-main text-text-main placeholder-text-secondary/60 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  className={inputWithIconClass}
                   placeholder="root"
                   disabled={isSubmitting}
                 />
@@ -225,7 +229,7 @@ export default function ConnectForm({ onConnect, initialConfig, autoConnect }: P
                   type="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-2.5 border border-border-main rounded-xl bg-bg-main text-text-main placeholder-text-secondary/60 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  className={inputWithIconClass}
                   placeholder="输入密码"
                   disabled={isSubmitting}
                 />
@@ -268,7 +272,7 @@ export default function ConnectForm({ onConnect, initialConfig, autoConnect }: P
                 name="privatekey"
                 value={formData.privatekey}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-border-main rounded-xl bg-bg-main text-text-main placeholder-text-secondary/60 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-mono text-sm"
+                className={`w-full px-3 py-2 ${inputBaseClass} placeholder-text-secondary/60 font-mono text-sm`}
                 placeholder="粘贴私钥内容..."
                 rows={4}
                 disabled={isSubmitting}
@@ -287,7 +291,7 @@ export default function ConnectForm({ onConnect, initialConfig, autoConnect }: P
                   type="password"
                   value={formData.passphrase}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-2.5 border border-border-main rounded-xl bg-bg-main text-text-main placeholder-text-secondary/60 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  className={inputWithIconClass}
                   placeholder="私钥的密码短语"
                   disabled={isSubmitting}
                 />
