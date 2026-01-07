@@ -13,8 +13,15 @@ import type {
 import { ErrorMessages } from '../types.js'
 
 export async function sshRoutes(fastify: FastifyInstance) {
-  // 建立 SSH 连接
-  fastify.post('/connect', async (request: FastifyRequest<{ Body: ConnectRequest }>, reply: FastifyReply) => {
+  // 建立 SSH 连接 - 应用速率限制防止暴力破解
+  fastify.post('/connect', {
+    config: {
+      rateLimit: {
+        max: 10,
+        timeWindow: '1 minute'
+      }
+    }
+  }, async (request: FastifyRequest<{ Body: ConnectRequest }>, reply: FastifyReply) => {
     const { hostname, port = 22, username, password, privatekey, passphrase } = request.body
 
     // 验证必填参数

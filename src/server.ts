@@ -45,9 +45,10 @@ async function main() {
     credentials: true
   })
 
-  // 速率限制 - /api/connect 端点
+  // 速率限制 - 只对 API 端点生效，排除静态资源
   await fastify.register(rateLimit, {
-    max: 10,
+    global: false, // 不全局应用，只在需要的路由上使用
+    max: 30,
     timeWindow: '1 minute',
     keyGenerator: (request) => request.ip,
     skipOnError: true,
